@@ -2,9 +2,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth, apiFetch } from '@/lib/auth-context';
 import {
-    BookOpen, Plus, CheckCircle2, AlertTriangle, BarChart3,
+    BookOpen, CheckCircle2, AlertTriangle, BarChart3,
     ChevronDown, ChevronRight, Pencil, X, Layers, Upload,
-    Clock, Trash2, GraduationCap, TrendingDown, Zap, Info,
+    Clock, Trash2, GraduationCap, TrendingDown, Zap, Info, FileText, Eye,
 } from 'lucide-react';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -58,12 +58,15 @@ export default function CoveragePage() {
     const [filterSem, setFilterSem] = useState('4');
     const [filterSec, setFilterSec] = useState('CS(AI)');
 
-    // ── HOD: Syllabus upload state ────────────────────────────────────────────
+    // ── HOD: Syllabus file upload state ──────────────────────────────────────
     const [showUpload, setShowUpload] = useState(false);
-    const [uploadForm, setUploadForm] = useState({ subjectId: '', semester: '4', section: 'CS(AI)', academicYear: '2024-25' });
-    const [topics, setTopics] = useState<Topic[]>([{ topicName: '', estimatedHours: 1, unit: '' }]);
+    const [uploadForm, setUploadForm] = useState({ subjectId: '', semester: '4', section: 'CS(AI)', academicYear: '2024-25', totalHours: '' });
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [dragOver, setDragOver] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [uploadPreview, setUploadPreview] = useState<{ extracted: number; preview: string[] } | null>(null);
     const [expandedSyllabus, setExpandedSyllabus] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // ── Faculty: Progress update state ───────────────────────────────────────
     const [showProgress, setShowProgress] = useState(false);
@@ -96,26 +99,42 @@ export default function CoveragePage() {
 
     useEffect(() => { load(); }, [load]);
 
-    // ── HOD: Upload syllabus ──────────────────────────────────────────────────
+    // ── HOD: Upload syllabus file ─────────────────────────────────────────────
     const uploadSyllabus = async () => {
-        const validTopics = topics.filter(t => t.topicName.trim());
         if (!uploadForm.subjectId) { setMsg('error:Please enter a Subject ID'); return; }
-        if (validTopics.length === 0) { setMsg('error:Add at least one topic'); return; }
-        setUploading(true); setMsg('');
-        const r = await apiFetch('/api/syllabus', {
+        if (!selectedFile) { setMsg('error:Please select a PDF, DOCX, or TXT file'); return; }
+        setUploading(true); setMsg(''); setUploadPreview(null);
+        const fd = new FormData();
+        fd.append('file', selectedFile);
+        fd.append('subjectId', uploadForm.subjectId);
+        fd.append('semester', uploadForm.semester);
+        fd.append('section', uploadForm.section);
+        fd.append('academicYear', uploadForm.academicYear);
+        fd.append('totalHours', uploadForm.totalHours || '0');
+        // Use raw fetch for FormData (apiFetch adds Content-Type: application/json)
+        const token = localStorage.getItem('token') || '';
+        const r = await fetch('/api/syllabus/upload', {
             method: 'POST',
-            body: JSON.stringify({ ...uploadForm, semester: parseInt(uploadForm.semester), topics: validTopics }),
+            headers: { 'Authorization': 'Bearer ' + token },
+            body: fd,
         });
         const d = await r.json();
         if (d.syllabus) {
-            setMsg('success:Syllabus uploaded!');
+            setMsg('success:Syllabus parsed & saved!');
+            setUploadPreview({ extracted: d.extracted, preview: d.preview || [] });
             setShowUpload(false);
-            setTopics([{ topicName: '', estimatedHours: 1, unit: '' }]);
+            setSelectedFile(null);
             await load();
         } else {
             setMsg('error:' + (d.error || 'Upload failed'));
         }
         setUploading(false);
+    };
+
+    const handleFileDrop = (e: React.DragEvent) => {
+        e.preventDefault(); setDragOver(false);
+        const f = e.dataTransfer.files[0];
+        if (f) setSelectedFile(f);
     };
 
     const deleteSyllabus = async (id: string) => {
@@ -152,10 +171,6 @@ export default function CoveragePage() {
     };
 
     // ── Helpers ───────────────────────────────────────────────────────────────
-    const addTopic = () => setTopics(t => [...t, { topicName: '', estimatedHours: 1, unit: '' }]);
-    const removeTopic = (i: number) => setTopics(t => t.filter((_, idx) => idx !== i));
-    const updateTopic = (i: number, field: keyof Topic, val: string | number) =>
-        setTopics(t => t.map((tp, idx) => idx === i ? { ...tp, [field]: val } : tp));
 
     // ── Selected syllabus for faculty progress form ───────────────────────────
     const selectedSyllabus = facSyllabi.find(s =>
@@ -230,87 +245,106 @@ export default function CoveragePage() {
                 </div>
             )}
 
-            {/* ════════════════ HOD: Syllabus Upload Form ════════════════ */}
+            {/* ════════════════ HOD: Syllabus File Upload Form ════════════════ */}
             {showUpload && isHOD && (
                 <div className="card" style={{ marginBottom: '1.5rem' }}>
-                    <h3 className="section-title" style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Upload size={18} color="var(--accent)" /> Upload Syllabus
+                    <h3 className="section-title" style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Upload size={18} color="var(--accent)" /> Upload Syllabus File
                     </h3>
+                    <p className="text-sm text-muted" style={{ marginBottom: '1.25rem' }}>
+                        Upload a PDF, DOCX, or TXT file — the backend will automatically extract all topics, detect units/modules, estimate hours, and populate the syllabus.
+                    </p>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <div className="form-row">
+                        {/* Class info */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
                             <div className="form-group">
                                 <label className="form-label">Semester</label>
                                 <select className="form-select" value={uploadForm.semester} onChange={e => setUploadForm({ ...uploadForm, semester: e.target.value })}>
-                                    {[1, 2, 3, 4, 5, 6, 7, 8].map(s => <option key={s} value={s}>Semester {s}</option>)}
+                                    {[1, 2, 3, 4, 5, 6, 7, 8].map(s => <option key={s} value={s}>Sem {s}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Section</label>
                                 <input className="form-input" value={uploadForm.section} onChange={e => setUploadForm({ ...uploadForm, section: e.target.value })} placeholder="CS(AI)" />
                             </div>
+                            <div className="form-group">
+                                <label className="form-label">Total Hours <span style={{ color: 'var(--text-muted)', textTransform: 'none', fontWeight: 400 }}>(optional)</span></label>
+                                <input className="form-input" type="number" value={uploadForm.totalHours} onChange={e => setUploadForm({ ...uploadForm, totalHours: e.target.value })} placeholder="e.g. 45" />
+                            </div>
                         </div>
                         <div className="form-group">
                             <label className="form-label">Subject ID</label>
-                            <input className="form-input" value={uploadForm.subjectId} onChange={e => setUploadForm({ ...uploadForm, subjectId: e.target.value })} placeholder="Paste subject ID from Subjects page" />
+                            <input className="form-input" value={uploadForm.subjectId} onChange={e => setUploadForm({ ...uploadForm, subjectId: e.target.value })} placeholder="Paste subject ID from the Subjects page" />
                         </div>
 
-                        {/* Topics builder */}
-                        <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                                <label className="form-label" style={{ marginBottom: 0 }}>Topics ({topics.length})</label>
-                                <button className="btn btn-secondary btn-sm" onClick={addTopic} style={{ gap: '0.4rem' }}>
-                                    <Plus size={13} /> Add Topic
-                                </button>
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: 360, overflowY: 'auto' }}>
-                                {topics.map((t, i) => (
-                                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '2.5rem 1fr auto 80px 2rem', gap: '0.5rem', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center', fontWeight: 700 }}>{i + 1}</span>
-                                        <input
-                                            className="form-input"
-                                            placeholder={`Topic ${i + 1} name`}
-                                            value={t.topicName}
-                                            onChange={e => updateTopic(i, 'topicName', e.target.value)}
-                                        />
-                                        <input
-                                            className="form-input"
-                                            placeholder="Unit / Module"
-                                            value={t.unit || ''}
-                                            onChange={e => updateTopic(i, 'unit', e.target.value)}
-                                            style={{ minWidth: 100 }}
-                                        />
-                                        <div style={{ position: 'relative' }}>
-                                            <input
-                                                className="form-input"
-                                                type="number"
-                                                min={0.5}
-                                                step={0.5}
-                                                value={t.estimatedHours}
-                                                onChange={e => updateTopic(i, 'estimatedHours', parseFloat(e.target.value) || 1)}
-                                                title="Estimated hours"
-                                            />
-                                            <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: '0.65rem', color: 'var(--text-muted)', pointerEvents: 'none' }}>hrs</span>
-                                        </div>
-                                        {topics.length > 1 ? (
-                                            <button className="btn btn-icon btn-sm btn-danger" onClick={() => removeTopic(i)} style={{ opacity: 0.7 }}>
-                                                <Trash2 size={12} />
-                                            </button>
-                                        ) : <span />}
-                                    </div>
-                                ))}
-                            </div>
-                            <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                <Clock size={13} />
-                                Total estimated: <strong style={{ color: 'var(--accent)' }}>{topics.reduce((s, t) => s + (Number(t.estimatedHours) || 0), 0).toFixed(1)} hours</strong>
+                        {/* Drag & drop file zone */}
+                        <div
+                            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                            onDragLeave={() => setDragOver(false)}
+                            onDrop={handleFileDrop}
+                            onClick={() => fileInputRef.current?.click()}
+                            style={{
+                                border: `2px dashed ${dragOver ? 'var(--accent)' : 'var(--border-glass)'}`,
+                                borderRadius: 14,
+                                padding: '2rem',
+                                textAlign: 'center',
+                                cursor: 'pointer',
+                                background: dragOver ? 'rgba(129,140,248,0.06)' : 'rgba(255,255,255,0.02)',
+                                transition: 'all 0.2s ease',
+                            }}
+                        >
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".pdf,.doc,.docx,.txt"
+                                style={{ display: 'none' }}
+                                onChange={e => setSelectedFile(e.target.files?.[0] || null)}
+                            />
+                            {selectedFile ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                                    <FileText size={36} color="var(--accent)" strokeWidth={1.5} />
+                                    <div style={{ fontWeight: 700 }}>{selectedFile.name}</div>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{(selectedFile.size / 1024).toFixed(0)} KB · Click to change</div>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                                    <Upload size={40} color="var(--text-muted)" strokeWidth={1} />
+                                    <div style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>Drag & drop your syllabus file here</div>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Supports PDF, DOCX, TXT · Click to browse</div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="alert alert-info" style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', padding: '0.75rem 1rem' }}>
+                            <Info size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+                            <div style={{ fontSize: '0.8rem' }}>
+                                The parser auto-detects numbered lists, bullet points, unit/module headers. If total hours are provided, they are distributed evenly across topics that don't have hours specified.
                             </div>
                         </div>
 
                         <div className="flex gap-2">
-                            <button className="btn btn-primary" onClick={uploadSyllabus} disabled={uploading} style={{ gap: '0.5rem' }}>
-                                {uploading ? <><span className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />Saving...</> : <><GraduationCap size={16} />Save Syllabus</>}
+                            <button className="btn btn-primary" onClick={uploadSyllabus} disabled={uploading || !selectedFile} style={{ gap: '0.5rem' }}>
+                                {uploading
+                                    ? <><span className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />Parsing & Saving...</>
+                                    : <><GraduationCap size={16} />Parse & Save Syllabus</>
+                                }
                             </button>
-                            <button className="btn btn-secondary" onClick={() => setShowUpload(false)}>Cancel</button>
+                            <button className="btn btn-secondary" onClick={() => { setShowUpload(false); setSelectedFile(null); }}>Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Upload success preview */}
+            {uploadPreview && (
+                <div className="alert alert-success" style={{ marginBottom: '1.25rem', display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                    <CheckCircle2 size={16} style={{ flexShrink: 0, marginTop: 1 }} />
+                    <div>
+                        <div style={{ fontWeight: 700 }}>Extracted {uploadPreview.extracted} topics from the file!</div>
+                        <div style={{ marginTop: '0.35rem', fontSize: '0.82rem', opacity: 0.85 }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.25rem' }}><Eye size={12} /> First topics detected:</span>
+                            {uploadPreview.preview.map((t, i) => <div key={i} style={{ paddingLeft: '1rem', fontSize: '0.8rem' }}>• {t}</div>)}
                         </div>
                     </div>
                 </div>

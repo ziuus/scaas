@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
         }
 
         const faculty = await Faculty.findOne({ email: user.email });
-        const uploadedBy = faculty?._id || user.id;
+        const uploadedBy = faculty?._id ?? user.userId ?? user.email;
 
         const totalEstimatedHours = normTopics.reduce((s, t) => s + t.estimatedHours, 0);
 
