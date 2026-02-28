@@ -9,9 +9,23 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/papaparse": "^5.5.2",
+    "@types/web-push": "^3.6.4",
+    "bcryptjs": "^3.0.3",
+    "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^0.575.0",
+    "mongodb-memory-server": "^11.0.1",
+    "mongoose": "^9.2.3",
     "next": "16.1.6",
+    "next-pwa": "^5.6.0",
+    "papaparse": "^5.5.3",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "recharts": "^3.7.0",
+    "web-push": "^3.6.7",
+    "workbox-window": "^7.4.0"
   },
   "devDependencies": {
     "@types/node": "^20",
