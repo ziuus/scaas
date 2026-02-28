@@ -7,36 +7,44 @@ import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
 declare global {
-    // eslint-disable-next-line no-var
     var __mongoServer: MongoMemoryServer | undefined;
-    // eslint-disable-next-line no-var
-    var __mongoConn: typeof mongoose | null;
-    // eslint-disable-next-line no-var
+    var __mongoPromise: Promise<typeof mongoose> | undefined;
     var __seeded: boolean;
 }
 
-let cached: typeof mongoose | null = global.__mongoConn ?? null;
-
 async function dbConnect(): Promise<typeof mongoose> {
-    if (cached) return cached;
-
-    // Start in-memory MongoDB if not already running
-    if (!global.__mongoServer) {
-        global.__mongoServer = await MongoMemoryServer.create();
+    if (mongoose.connection.readyState >= 1) {
+        return mongoose;
     }
 
-    const uri = global.__mongoServer.getUri();
-
-    cached = await mongoose.connect(uri, { bufferCommands: false });
-    global.__mongoConn = cached;
-
-    // Auto-seed demo data once
-    if (!global.__seeded) {
-        global.__seeded = true;
-        await seedDemoData();
+    if (global.__mongoPromise) {
+        return global.__mongoPromise;
     }
 
-    return cached;
+    global.__mongoPromise = (async () => {
+        // Start in-memory MongoDB if not already running
+        if (!global.__mongoServer) {
+            global.__mongoServer = await MongoMemoryServer.create();
+        }
+
+        const uri = global.__mongoServer.getUri();
+        const conn = await mongoose.connect(uri, { bufferCommands: false });
+
+        // Auto-seed demo data once
+        if (!global.__seeded) {
+            global.__seeded = true;
+            await seedDemoData();
+        }
+
+        return conn;
+    })();
+
+    try {
+        return await global.__mongoPromise;
+    } catch (e) {
+        global.__mongoPromise = undefined;
+        throw e;
+    }
 }
 
 async function seedDemoData() {

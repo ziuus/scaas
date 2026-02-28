@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
         await dbConnect();
         const departments = await Department.find().populate('hodId', 'name email').sort({ name: 1 });
         return NextResponse.json({ departments });
-    } catch (err) {
+    } catch {
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const dept = await Department.create(body);
         return NextResponse.json({ dept }, { status: 201 });
-    } catch (err) {
+    } catch {
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }

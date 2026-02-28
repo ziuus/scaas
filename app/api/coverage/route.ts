@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
             section,
         });
 
-        const subject = await Subject.findById(subjectId);
+        await Subject.findById(subjectId);
 
         let updateData: Record<string, unknown>;
 

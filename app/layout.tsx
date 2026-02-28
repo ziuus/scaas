@@ -2,14 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/lib/auth-context';
 import AppShell from '@/components/AppShell';
-
-export const metadata: Metadata = {
-  title: 'Smart College Academic Automation System',
-  description: 'Automate timetables, leave management, exam seating, and invigilation for your college.',
-  manifest: '/manifest.json',
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'SmartCollege' },
-  other: { 'mobile-web-app-capable': 'yes' },
-};
+import { ThemeProvider } from '@/lib/theme-context';
 
 export const viewport: Viewport = {
   themeColor: '#6366f1',
@@ -17,9 +10,14 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+export const metadata: Metadata = {
+  title: 'SmartCollege - Academic Automation',
+  description: 'AI-Powered Academic Automation System',
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -27,9 +25,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <AuthProvider>
-          <AppShell>{children}</AppShell>
+          <ThemeProvider>
+            <AppShell>{children}</AppShell>
+          </ThemeProvider>
         </AuthProvider>
       </body>
     </html>

@@ -3,9 +3,10 @@ import { useState, useEffect } from 'react';
 import { useAuth, apiFetch } from '@/lib/auth-context';
 import {
     Users, Umbrella, CalendarDays, Building2,
-    TrendingUp, Award, BarChart3, CheckCircle2,
+    TrendingUp, CheckCircle2,
     Clock, XCircle
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface Stats {
     summary?: { totalFaculty: number; totalLeaves: number; totalTimetableSlots: number; totalRooms: number };
@@ -27,103 +28,158 @@ export default function PrincipalDashboard() {
     const s = stats.summary;
 
     return (
-        <div>
+        <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+        >
             <div className="page-header">
-                <div>
+                <motion.div
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                >
                     <h1 className="page-title">Principal Dashboard</h1>
-                    <p className="page-subtitle">Welcome back, {user?.name} — Full system overview</p>
-                </div>
+                    <p className="page-subtitle">Welcome back, {user?.name} &mdash; Full system overview</p>
+                </motion.div>
             </div>
 
-            <div className="card-grid" style={{ marginBottom: '2rem' }}>
+            <div className="bento-grid">
+                {/* Stats Summary Section */}
                 {[
-                    { icon: Users, value: s?.totalFaculty ?? 0, label: 'Total Faculty', color: 'var(--accent)' },
-                    { icon: Umbrella, value: stats.leaveByStatus?.pending ?? 0, label: 'Pending Leaves', color: 'var(--warning)' },
-                    { icon: CalendarDays, value: s?.totalTimetableSlots ?? 0, label: 'Timetable Slots', color: 'var(--success)' },
-                    { icon: Building2, value: s?.totalRooms ?? 0, label: 'Total Rooms', color: 'var(--info)' },
-                ].map(({ icon: Icon, value, label, color }) => (
-                    <div key={label} className="stat-card">
-                        <div className="stat-icon"><Icon size={28} color={color} strokeWidth={1.5} /></div>
-                        <div className="stat-value" style={{ color }}>{value}</div>
-                        <div className="stat-label">{label}</div>
-                    </div>
-                ))}
-            </div>
-
-            <div className="card-grid">
-                <div className="card">
-                    <div className="section-header"><h3 className="section-title">Leave Status Overview</h3></div>
-                    {stats.leaveByStatus && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            {([
-                                { key: 'pending', label: 'Pending', Icon: Clock, color: 'var(--warning)' },
-                                { key: 'approved', label: 'Approved', Icon: CheckCircle2, color: 'var(--success)' },
-                                { key: 'rejected', label: 'Rejected', Icon: XCircle, color: 'var(--danger)' },
-                            ] as { key: 'pending' | 'approved' | 'rejected'; label: string; Icon: React.FC<{ size: number; color: string }>; color: string }[]).map(({ key, label, Icon, color }) => {
-                                const count = stats.leaveByStatus![key];
-                                return (
-                                    <div key={key}>
-                                        <div className="flex justify-between text-sm" style={{ marginBottom: '4px' }}>
-                                            <span className="flex items-center gap-2"><Icon size={14} color={color} />{label}</span>
-                                            <span className="font-bold">{count}</span>
-                                        </div>
-                                        <div className="progress-bar">
-                                            <div className="progress-fill" style={{ width: `${Math.min(100, count * 20)}%`, background: color }} />
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-
-                <div className="card">
-                    <div className="section-header"><h3 className="section-title">Top Invigilators</h3></div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        {(stats.invigilationDist || []).slice(0, 5).map((f, i) => (
-                            <div key={f.name} className="flex justify-between items-center">
-                                <div className="flex items-center gap-2">
-                                    <span style={{ color: 'var(--accent)', fontWeight: 700, fontSize: '0.875rem' }}>#{i + 1}</span>
-                                    <Award size={14} color="var(--accent)" />
-                                    <span className="text-sm">{f.name}</span>
-                                </div>
-                                <span className="badge badge-primary">{f.count} duties</span>
+                    { icon: Users, value: s?.totalFaculty ?? 0, label: 'Total Faculty', color: '#6366f1' },
+                    { icon: Umbrella, value: stats.leaveByStatus?.pending ?? 0, label: 'Pending Leaves', color: '#fbbf24' },
+                    { icon: CalendarDays, value: s?.totalTimetableSlots ?? 0, label: 'Timetable Slots', color: '#34d399' },
+                    { icon: Building2, value: s?.totalRooms ?? 0, label: 'Total Rooms', color: '#60a5fa' },
+                ].map(({ icon: Icon, value, label, color }, i) => (
+                    <motion.div 
+                        key={label} 
+                        className="bento-card bento-col-3"
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: 0.1 * i + 0.3 }}
+                        whileHover={{ y: -5, boxShadow: 'var(--shadow-accent)' }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+                            <div style={{ background: `${color}15`, padding: '0.75rem', borderRadius: '12px' }}>
+                                <Icon size={24} color={color} strokeWidth={1.5} />
                             </div>
-                        ))}
-                        {(stats.invigilationDist || []).length === 0 && <p className="text-muted text-sm">No invigilation data yet.</p>}
-                    </div>
-                </div>
+                        </div>
+                        <div className="stat-value" style={{ color: 'var(--text-primary)', fontSize: '1.75rem', marginBottom: '0.25rem' }}>{value}</div>
+                        <div className="stat-label" style={{ fontSize: '0.75rem' }}>{label}</div>
+                    </motion.div>
+                ))}
 
-                <div className="card" style={{ gridColumn: 'span 2' }}>
+                {/* Major Insight: Workload */}
+                <motion.div 
+                    className="bento-card bento-col-8"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.7 }}
+                >
                     <div className="section-header">
                         <h3 className="section-title">Faculty Workload Overview</h3>
                         <TrendingUp size={18} color="var(--accent)" />
                     </div>
                     <div className="table-wrapper">
                         <table className="table">
-                            <thead><tr><th>Faculty</th><th>Department</th><th>Load</th><th>Utilization</th><th>Invigilations</th></tr></thead>
+                            <thead><tr><th>Faculty</th><th>Department</th><th>Usage</th><th>Utilization</th></tr></thead>
                             <tbody>
-                                {(stats.workloadData || []).slice(0, 10).map(f => (
+                                {(stats.workloadData || []).slice(0, 6).map(f => (
                                     <tr key={f.name}>
                                         <td className="font-bold">{f.name}</td>
                                         <td className="text-muted text-sm">{f.department}</td>
-                                        <td>{f.currentLoad}/{f.maxLoad} hrs</td>
-                                        <td>
+                                        <td>{f.currentLoad}/{f.maxLoad}h</td>
+                                        <td style={{ width: '150px' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <div className="progress-bar" style={{ flex: 1 }}>
-                                                    <div className="progress-fill" style={{ width: `${f.utilizationPct}%` }} />
+                                                <div style={{ flex: 1, height: '6px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
+                                                    <motion.div 
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${f.utilizationPct}%` }}
+                                                        transition={{ duration: 1, delay: 1 }}
+                                                        style={{ height: '100%', background: f.utilizationPct > 90 ? 'var(--danger)' : 'var(--accent)', borderRadius: '3px' }} 
+                                                    />
                                                 </div>
-                                                <span className="text-xs text-muted">{f.utilizationPct}%</span>
+                                                <span className="text-xs text-muted" style={{ minWidth: '30px' }}>{f.utilizationPct}%</span>
                                             </div>
                                         </td>
-                                        <td><span className="badge badge-info">{f.invigilationCount}</span></td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
+                </motion.div>
+
+                {/* Insight Column */}
+                <div className="bento-col-4" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <motion.div 
+                        className="bento-card"
+                        initial={{ x: 20, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 0.8 }}
+                        style={{ flex: 1 }}
+                    >
+                        <div className="section-header"><h3 className="section-title">Leave Trends</h3></div>
+                        {stats.leaveByStatus && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                                {[
+                                    { key: 'pending', label: 'Pending', Icon: Clock, color: 'var(--warning)' },
+                                    { key: 'approved', label: 'Approved', Icon: CheckCircle2, color: 'var(--success)' },
+                                    { key: 'rejected', label: 'Rejected', Icon: XCircle, color: 'var(--danger)' },
+                                ].map(({ key, label, Icon, color }) => {
+                                    const count = stats.leaveByStatus?.[key as 'pending' | 'approved' | 'rejected'] ?? 0;
+                                    const total = (stats.leaveByStatus?.pending ?? 0) + (stats.leaveByStatus?.approved ?? 0) + (stats.leaveByStatus?.rejected ?? 0);
+                                    const pct = total > 0 ? (count / total) * 100 : 0;
+                                    return (
+                                        <div key={key}>
+                                            <div className="flex justify-between items-center text-sm" style={{ marginBottom: '6px' }}>
+                                                <span className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}><Icon size={14} color={color} />{label}</span>
+                                                <span className="font-bold">{count}</span>
+                                            </div>
+                                            <div style={{ height: '4px', background: 'var(--border)', borderRadius: '2px', overflow: 'hidden' }}>
+                                                <motion.div 
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${pct}%` }}
+                                                    transition={{ duration: 1, delay: 1.2 }}
+                                                    style={{ height: '100%', background: color, borderRadius: '2px' }} 
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </motion.div>
+
+                    <motion.div 
+                        className="bento-card"
+                        initial={{ x: 20, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 0.9 }}
+                    >
+                        <div className="section-header"><h3 className="section-title">Top Invigilators</h3></div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                            {(stats.invigilationDist || []).slice(0, 3).map((f, i) => (
+                                <motion.div 
+                                    key={f.name} 
+                                    className="flex justify-between items-center"
+                                    initial={{ opacity: 0, x: 10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 1.5 + (0.1 * i) }}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: 'var(--accent)', fontWeight: 800 }}>
+                                            {i + 1}
+                                        </div>
+                                        <span className="text-sm font-medium">{f.name}</span>
+                                    </div>
+                                    <span className="text-xs font-bold" style={{ color: 'var(--accent)' }}>{f.count} duties</span>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </motion.div>
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 }

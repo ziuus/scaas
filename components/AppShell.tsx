@@ -4,22 +4,36 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
+import AnimatedBackground from './AnimatedBackground';
 import { WifiOff, GraduationCap, X } from 'lucide-react';
+import styles from './Sidebar.module.css';
 
 const PUBLIC_PATHS = ['/login'];
+
+interface BeforeInstallPromptEvent extends Event {
+    readonly platforms: Array<string>;
+    readonly userChoice: Promise<{
+        outcome: 'accepted' | 'dismissed',
+        platform: string
+    }>;
+    prompt(): Promise<void>;
+}
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
     const { user, isLoading } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
-    const [isOnline, setIsOnline] = useState(true);
+    const [isOnline, setIsOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
     const [showInstall, setShowInstall] = useState(false);
-    const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
+    const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+    const [isSidebarOpen, setSidebarOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setMounted(true);
         const handleOnline = () => setIsOnline(true);
         const handleOffline = () => setIsOnline(false);
-        setIsOnline(navigator.onLine);
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
         if ('serviceWorker' in navigator) {
@@ -29,28 +43,37 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }, []);
 
     useEffect(() => {
-        const handler = (e: Event) => { e.preventDefault(); setDeferredPrompt(e); setShowInstall(true); };
+        const handler = (e: Event) => { 
+            e.preventDefault(); 
+            setDeferredPrompt(e as BeforeInstallPromptEvent); 
+            setShowInstall(true); 
+        };
         window.addEventListener('beforeinstallprompt', handler);
         return () => window.removeEventListener('beforeinstallprompt', handler);
     }, []);
 
     useEffect(() => {
+        if (!mounted) return;
         if (!isLoading && !user && !PUBLIC_PATHS.includes(pathname)) {
             router.push('/login');
         }
         if (!isLoading && user && pathname === '/login') {
             router.push(`/dashboard/${user.role}`);
         }
-    }, [user, isLoading, pathname, router]);
+    }, [user, isLoading, pathname, router, mounted]);
 
     const handleInstall = async () => {
         if (deferredPrompt) {
-            (deferredPrompt as BeforeInstallPromptEvent).prompt?.();
+            deferredPrompt.prompt();
             setShowInstall(false);
         }
     };
 
-    if (isLoading) {
+    const toggleSidebar = () => {
+        setSidebarOpen(!isSidebarOpen);
+    };
+
+    if (isLoading || !mounted) {
         return (
             <div className="loading-center" style={{ minHeight: '100vh' }}>
                 <div className="spinner" />
@@ -61,19 +84,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     const isPublicPage = PUBLIC_PATHS.includes(pathname);
 
     return (
-        <div className="app-wrapper">
+        <div className={styles.appShell}>
+            <AnimatedBackground />
             {!isOnline && (
                 <div style={{
                     background: 'var(--warning)', color: '#1a1a1a',
                     padding: '0.5rem 1rem', textAlign: 'center',
                     fontSize: '0.85rem', fontWeight: 600,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                    position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
+                    position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1100,
                 }}>
                     <WifiOff size={16} /> You are offline — viewing cached data
                 </div>
             )}
-            {!isPublicPage && user && <Sidebar />}
+            {!isPublicPage && user && <Sidebar isOpen={isSidebarOpen} toggle={toggleSidebar} />}
             <main className={isPublicPage ? '' : 'main-content'} style={!isOnline ? { paddingTop: '2.5rem' } : {}}>
                 {children}
             </main>
@@ -87,7 +111,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     boxShadow: '0 -4px 20px rgba(0,0,0,0.3)',
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{ background: 'linear-gradient(135deg,#6366f1,#818cf8)', borderRadius: 12, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ background: 'var(--accent-gradient)', borderRadius: 12, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <GraduationCap size={22} color="white" strokeWidth={1.5} />
                         </div>
                         <div>
@@ -103,8 +127,4 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             )}
         </div>
     );
-}
-
-interface BeforeInstallPromptEvent extends Event {
-    prompt?: () => Promise<void>;
 }

@@ -1,12 +1,14 @@
 'use client';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import {
     LayoutDashboard, CalendarDays, Users, BookOpen,
     Umbrella, ClipboardList, Eye, Upload,
-    BarChart3, BarChart2, Bell, LogOut, GraduationCap,
+    BarChart3, BarChart2, Bell, LogOut, GraduationCap, X
 } from 'lucide-react';
+import ThemeToggle from './ThemeToggle';
 import styles from './Sidebar.module.css';
 
 const NAV_ITEMS = {
@@ -42,17 +44,33 @@ const NAV_ITEMS = {
     ],
 };
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, toggle }: { isOpen?: boolean; toggle?: () => void }) {
     const { user, logout } = useAuth();
     const pathname = usePathname();
-    if (!user) return null;
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setMounted(true);
+    }, []);
+
+    if (!mounted || !user) return null;
     const items = NAV_ITEMS[user.role] || [];
     const initials = user.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
 
     return (
-        <aside className={styles.sidebar}>
-            {/* Logo */}
-            <div className={styles.logo}>
+        <>
+            {/* Mobile Overlay */}
+            {isOpen && <div className={styles.mobileOverlay} onClick={toggle} />}
+            
+            <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
+                {/* Mobile Close Button */}
+                <button className={styles.closeBtn} onClick={toggle}>
+                    <X size={20} />
+                </button>
+
+                {/* Logo */}
+                <div className={styles.logo}>
                 <GraduationCap size={32} color="var(--accent)" strokeWidth={1.5} />
                 <div>
                     <div className={styles.logoName}>SmartCollege</div>
@@ -83,11 +101,16 @@ export default function Sidebar() {
                 })}
             </nav>
 
-            {/* Logout */}
-            <button className={styles.logoutBtn} onClick={logout}>
-                <LogOut size={16} />
-                Sign Out
-            </button>
+            {/* Bottom Actions */}
+            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 0.5rem' }}>
+                    <ThemeToggle />
+                    <button className={styles.logoutBtnSmall} onClick={logout} title="Sign Out">
+                        <LogOut size={18} />
+                    </button>
+                </div>
+            </div>
         </aside>
+        </>
     );
 }

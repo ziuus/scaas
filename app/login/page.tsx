@@ -1,7 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { GraduationCap, Mail, Lock, ArrowRight, User, Shield, BookOpen, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function LoginPage() {
     const { login } = useAuth();
@@ -41,180 +43,182 @@ export default function LoginPage() {
     ];
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1.5rem',
-            position: 'relative',
-        }}>
-            {/* Decorative floating orbs */}
-            <div style={{
-                position: 'fixed', top: '10%', left: '15%', width: 400, height: 400,
-                background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)',
-                borderRadius: '50%', pointerEvents: 'none', animation: 'float1 8s ease-in-out infinite',
-            }} />
-            <div style={{
-                position: 'fixed', bottom: '15%', right: '10%', width: 300, height: 300,
-                background: 'radial-gradient(circle, rgba(244,114,182,0.12) 0%, transparent 70%)',
-                borderRadius: '50%', pointerEvents: 'none', animation: 'float2 10s ease-in-out infinite',
-            }} />
-            <div style={{
-                position: 'fixed', top: '55%', right: '20%', width: 200, height: 200,
-                background: 'radial-gradient(circle, rgba(167,139,250,0.1) 0%, transparent 70%)',
-                borderRadius: '50%', pointerEvents: 'none', animation: 'float3 6s ease-in-out infinite',
-            }} />
+        <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
+            <div className="fixed top-6 right-6 z-50">
+                <ThemeToggle />
+            </div>
 
-            <style>{`
-                @keyframes float1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(30px,-20px)} }
-                @keyframes float2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-20px,30px)} }
-                @keyframes float3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(15px,15px)} }
-                @keyframes logoSpin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-                @keyframes gradient-shift {
-                    0%   { background-position: 0% 50%; }
-                    50%  { background-position: 100% 50%; }
-                    100% { background-position: 0% 50%; }
-                }
-            `}</style>
-
-            <div style={{ width: '100%', maxWidth: 420, position: 'relative', zIndex: 10 }}>
+            <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="w-full max-w-[420px] relative z-10"
+            >
                 {/* Logo / Hero */}
-                <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+                <motion.div 
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.2, type: 'spring' }}
+                    className="text-center mb-10"
+                >
                     <div style={{
                         width: 80, height: 80, borderRadius: '24px',
-                        background: 'linear-gradient(135deg, #6366f1, #a78bfa, #f472b6)',
+                        background: 'var(--accent-gradient)',
                         backgroundSize: '200% 200%',
                         animation: 'gradient-shift 4s ease infinite',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         margin: '0 auto 1.25rem',
-                        boxShadow: '0 0 0 1px rgba(129,140,248,0.3), 0 20px 60px rgba(99,102,241,0.4)',
+                        boxShadow: '0 0 0 1px var(--border-glass), var(--shadow)',
                     }}>
                         <GraduationCap size={40} color="white" strokeWidth={1.5} />
                     </div>
-                    <h1 style={{
-                        fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.03em',
-                        background: 'linear-gradient(135deg, #f0f0ff 0%, #a78bfa 50%, #f472b6 100%)',
+                    <h1 className="text-3xl font-extrabold tracking-tight" style={{
+                        background: 'linear-gradient(135deg, var(--text-primary) 0%, var(--accent-2) 100%)',
                         WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
                     }}>
                         SmartCollege
                     </h1>
-                    <p style={{ color: 'rgba(160,160,200,0.7)', marginTop: '0.4rem', fontSize: '0.9rem', letterSpacing: '0.02em' }}>
+                    <p className="text-secondary mt-2 font-medium opacity-80" style={{ color: 'var(--text-secondary)' }}>
                         Academic Automation System
                     </p>
-                </div>
+                </motion.div>
 
                 {/* Login Form */}
-                <div style={{
-                    background: 'rgba(16, 14, 40, 0.8)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: 24,
-                    padding: '2rem',
-                    backdropFilter: 'blur(24px)',
-                    WebkitBackdropFilter: 'blur(24px)',
-                    boxShadow: '0 24px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)',
-                    marginBottom: '1rem',
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.75rem' }}>
-                        <Sparkles size={16} color="#a78bfa" />
-                        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f0f0ff' }}>Sign In</h2>
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.4 }}
+                    style={{
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border-glass)',
+                        borderRadius: 'var(--radius-lg)',
+                        padding: '2.5rem',
+                        backdropFilter: 'blur(32px)',
+                        WebkitBackdropFilter: 'blur(32px)',
+                        boxShadow: 'var(--shadow)',
+                        marginBottom: '1.5rem',
+                    }}
+                >
+                    <div className="flex items-center gap-2 mb-8">
+                        <Sparkles size={16} color="var(--accent-2)" />
+                        <h2 className="text-xl font-extrabold" style={{ color: 'var(--text-primary)' }}>Sign In</h2>
                     </div>
 
-                    {error && (
-                        <div className="alert alert-error" style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Shield size={15} />{error}
-                        </div>
-                    )}
+                    <AnimatePresence mode="wait">
+                        {error && (
+                            <motion.div 
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="alert alert-error mb-6"
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                            >
+                                <Shield size={15} />{error}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
-                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                         <div className="form-group">
-                            <label className="form-label">Email Address</label>
-                            <div style={{ position: 'relative' }}>
-                                <Mail size={15} style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: focused === 'email' ? '#818cf8' : 'rgba(100,100,160,0.6)', transition: 'color 0.2s' }} />
+                            <label className="form-label mb-2 block font-bold text-xs uppercase tracking-wider opacity-70" style={{ color: 'var(--text-primary)' }}>Email Address</label>
+                            <div className="relative">
+                                <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors" 
+                                    style={{ color: focused === 'email' ? 'var(--accent)' : 'var(--text-muted)' }} 
+                                />
                                 <input
-                                    className="form-input" type="email" value={email}
+                                    className="form-input w-full" type="email" value={email}
                                     onChange={e => setEmail(e.target.value)}
                                     onFocus={() => setFocused('email')}
                                     onBlur={() => setFocused(null)}
                                     placeholder="your@college.edu" required
-                                    style={{ paddingLeft: 38 }}
+                                    style={{ paddingLeft: '2.75rem', height: '3.5rem' }}
                                 />
                             </div>
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Password</label>
-                            <div style={{ position: 'relative' }}>
-                                <Lock size={15} style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: focused === 'password' ? '#818cf8' : 'rgba(100,100,160,0.6)', transition: 'color 0.2s' }} />
+                            <label className="form-label mb-2 block font-bold text-xs uppercase tracking-wider opacity-70" style={{ color: 'var(--text-primary)' }}>Password</label>
+                            <div className="relative">
+                                <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors"
+                                    style={{ color: focused === 'password' ? 'var(--accent)' : 'var(--text-muted)' }}
+                                />
                                 <input
-                                    className="form-input" type="password" value={password}
+                                    className="form-input w-full" type="password" value={password}
                                     onChange={e => setPassword(e.target.value)}
                                     onFocus={() => setFocused('password')}
                                     onBlur={() => setFocused(null)}
                                     placeholder="••••••••" required
-                                    style={{ paddingLeft: 38 }}
+                                    style={{ paddingLeft: '2.75rem', height: '3.5rem' }}
                                 />
                             </div>
                         </div>
                         <button
-                            className="btn btn-primary btn-lg" type="submit" disabled={loading}
-                            style={{ width: '100%', justifyContent: 'center', gap: '0.625rem', marginTop: '0.5rem', borderRadius: 12, fontSize: '1rem' }}
+                            className="btn btn-primary w-full mt-2" 
+                            type="submit" disabled={loading}
+                            style={{ 
+                                justifyContent: 'center', gap: '0.75rem', height: '3.5rem', 
+                                fontSize: '1rem', fontWeight: 700, borderRadius: '12px' 
+                            }}
                         >
                             {loading
-                                ? <><span className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} /> Signing In...</>
+                                ? <><span className="spinner" style={{ width: '1.25rem', height: '1.25rem', border: '2px solid white', borderTopColor: 'transparent' }} /> Signing In...</>
                                 : <>Sign In <ArrowRight size={18} /></>
                             }
                         </button>
                     </form>
-                </div>
+                </motion.div>
 
                 {/* Demo accounts */}
-                <div style={{
-                    background: 'rgba(16,14,40,0.6)',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    borderRadius: 20,
-                    padding: '1.25rem 1.5rem',
-                    backdropFilter: 'blur(20px)',
-                    WebkitBackdropFilter: 'blur(20px)',
-                }}>
-                    <p style={{ fontSize: '0.75rem', color: 'rgba(100,100,160,0.8)', marginBottom: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                    style={{
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border-glass)',
+                        borderRadius: 20,
+                        padding: '1.5rem',
+                        backdropFilter: 'blur(20px)',
+                        boxShadow: 'var(--shadow)',
+                    }}
+                >
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-muted mb-4 opacity-60" style={{ color: 'var(--text-muted)' }}>
                         Quick access — demo accounts
                     </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div className="flex flex-col gap-2.5">
                         {demoAccounts.map(({ role, Icon, label, subtitle, color }) => (
-                            <button
+                            <motion.button
+                                whileHover={{ x: 5, backgroundColor: 'rgba(99, 102, 241, 0.08)', borderColor: color }}
                                 key={role}
                                 onClick={() => demoLogin(role)}
+                                className="flex items-center justify-between p-3.5 rounded-xl cursor-pointer transition-all"
                                 style={{
-                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                    padding: '0.7rem 0.875rem', background: `rgba(${color === '#f472b6' ? '244,114,182' : color === '#a78bfa' ? '167,139,250' : '96,165,250'},0.06)`,
-                                    border: `1px solid ${color}26`,
-                                    borderRadius: 10, cursor: 'pointer',
-                                    fontFamily: 'var(--font)', transition: 'all 0.2s ease',
-                                    color: '#f0f0ff',
-                                }}
-                                onMouseEnter={e => {
-                                    (e.currentTarget as HTMLElement).style.background = `${color}12`;
-                                    (e.currentTarget as HTMLElement).style.borderColor = `${color}55`;
-                                    (e.currentTarget as HTMLElement).style.transform = 'translateX(4px)';
-                                }}
-                                onMouseLeave={e => {
-                                    (e.currentTarget as HTMLElement).style.background = `${color}0A`;
-                                    (e.currentTarget as HTMLElement).style.borderColor = `${color}26`;
-                                    (e.currentTarget as HTMLElement).style.transform = 'translateX(0)';
+                                    fontFamily: 'var(--font)',
+                                    background: 'var(--bg-glass)',
+                                    border: '1px solid var(--border-glass)',
+                                    color: 'var(--text-primary)',
+                                    width: '100%',
                                 }}
                             >
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', fontSize: '0.875rem', fontWeight: 600 }}>
-                                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, background: `${color}18`, borderRadius: 7 }}>
+                                <span className="flex items-center gap-3 text-sm font-bold">
+                                    <span style={{ background: `${color}15`, border: `1px solid ${color}30`, width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px' }}>
                                         <Icon size={14} color={color} />
                                     </span>
                                     {label}
                                 </span>
-                                <span style={{ fontSize: '0.72rem', color: 'rgba(160,160,200,0.6)' }}>{subtitle}</span>
-                            </button>
+                                <span className="text-[11px] font-medium" style={{ color: 'var(--text-muted)' }}>{subtitle}</span>
+                            </motion.button>
                         ))}
                     </div>
-                </div>
-            </div>
+                </motion.div>
+            </motion.div>
+
+            <style jsx global>{`
+                @keyframes gradient-shift {
+                    0% { background-position: 0% 50% }
+                    50% { background-position: 100% 50% }
+                    100% { background-position: 0% 50% }
+                }
+            `}</style>
         </div>
     );
 }

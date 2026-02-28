@@ -11,7 +11,29 @@ export async function GET(req: NextRequest) {
         await dbConnect();
         const notifications = await Notification.find({ userId: user.userId }).sort({ createdAt: -1 }).limit(50);
         return NextResponse.json({ notifications });
-    } catch (err) {
+    } catch {
+        return NextResponse.json({ error: 'Failed to fetch' }, { status: 500 });
+    }
+}
+
+export async function PATCH(req: Request) {
+    try {
+        await dbConnect();
+        const { notificationId } = await req.json();
+        const notification = await Notification.findByIdAndUpdate(notificationId, { isRead: true }, { new: true });
+        return NextResponse.json({ notification });
+    } catch {
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    }
+}
+
+export async function DELETE(req: Request) {
+    try {
+        await dbConnect();
+        const { notificationId } = await req.json();
+        await Notification.findByIdAndDelete(notificationId);
+        return NextResponse.json({ success: true });
+    } catch {
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
@@ -28,7 +50,7 @@ export async function PUT(req: NextRequest) {
             { isRead: true }
         );
         return NextResponse.json({ success: true });
-    } catch (err) {
+    } catch {
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }

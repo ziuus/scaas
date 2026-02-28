@@ -36,8 +36,7 @@ const COLS_PER_ROW = 6;
 
 export function allocateSeating(
     students: StudentInfo[],
-    rooms: RoomInfo[],
-    preferDeptSeparation = true
+    rooms: RoomInfo[]
 ): { allocations: SeatAllocation[]; unallocated: string[] } {
     const allocations: SeatAllocation[] = [];
     const unallocated: string[] = [];

@@ -3,8 +3,9 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth, apiFetch } from '@/lib/auth-context';
 import {
     CalendarDays, List, Zap, LayoutGrid, Users, BookOpen,
-    CheckCircle2, AlertTriangle, BarChart2, TrendingUp,
+    CheckCircle2, AlertTriangle
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface TSlot { day: string; startTime: string; endTime: string; subjectId?: { subjectName?: string; subjectCode?: string }; facultyId?: { _id?: string; name?: string }; roomId?: { roomNumber?: string }; section?: string; semester?: number; }
 interface Timetable { _id: string; departmentId?: { name?: string }; semester: number; section: string; isApproved: boolean; slots: TSlot[]; generatedAt: string; }
@@ -23,10 +24,6 @@ export default function TimetablePage() {
     const [generating, setGenerating] = useState(false);
     const [genForm, setGenForm] = useState({ departmentId: '', semester: '3', section: 'A', academicYear: '2024-25' });
     const [msg, setMsg] = useState('');
-    const [priorityMsg, setPriorityMsg] = useState('');
-    const [priorityReport, setPriorityReport] = useState<{ subjectName: string; coverage: number; baseHours: number; scheduledHours: number; priority: string }[]>([]);
-    const [generatingPriority, setGeneratingPriority] = useState(false);
-    const [priorityForm, setPriorityForm] = useState({ semester: '4', section: 'CS(AI)' });
 
     // New view states
     const [viewType, setViewType] = useState<'class' | 'faculty'>('class');
@@ -45,22 +42,29 @@ export default function TimetablePage() {
         setLoading(false);
     }, []);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => { load(); }, [load]);
 
     // Extract unique faculties from generated timetables
     const faculties = useMemo(() => {
-        const facs = new Map();
+        const facs = new Map<string, { _id: string; name: string }>();
         timetables.forEach(t => {
             t.slots.forEach(s => {
-                if (s.facultyId && s.facultyId._id) {
-                    facs.set(s.facultyId._id, s.facultyId);
+                const f = s.facultyId as { _id?: string; name?: string } | undefined;
+                if (f && f._id) {
+                    facs.set(f._id, { _id: f._id, name: f.name || 'Unknown' });
                 }
             });
         });
-        const list = Array.from(facs.values());
-        if (list.length > 0 && !selectedFacultyId) setSelectedFacultyId(list[0]._id!);
-        return list;
-    }, [timetables, selectedFacultyId]);
+        return Array.from(facs.values());
+    }, [timetables]);
+
+    useEffect(() => {
+        if (faculties.length > 0 && !selectedFacultyId) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setSelectedFacultyId(faculties[0]._id!);
+        }
+    }, [faculties, selectedFacultyId]);
 
     const generate = async () => {
         setGenerating(true); setMsg('');
@@ -71,24 +75,6 @@ export default function TimetablePage() {
             await load();
         } else setMsg('error:' + d.error);
         setGenerating(false);
-    };
-
-    const generatePriority = async () => {
-        setGeneratingPriority(true); setPriorityMsg(''); setPriorityReport([]);
-        const r = await apiFetch('/api/timetable/generate-priority', {
-            method: 'POST',
-            body: JSON.stringify(priorityForm),
-        });
-        const d = await r.json();
-        if (d.timetable) {
-            setPriorityReport(d.priorityReport || []);
-            const conflict = d.conflicts?.length > 0 ? ` ${d.conflicts.length} scheduling conflicts.` : '';
-            setPriorityMsg(`success:Generated ${d.slotsGenerated} slots using coverage-based priority.${conflict}`);
-            await load();
-        } else {
-            setPriorityMsg('error:' + (d.error || 'Failed'));
-        }
-        setGeneratingPriority(false);
     };
 
     const getSlot = (day: string, time: string) => {
@@ -127,7 +113,10 @@ export default function TimetablePage() {
     const isHODOrPrincipal = ['hod', 'principal'].includes(user?.role || '');
 
     return (
-        <div>
+        <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+        >
             <div className="page-header">
                 <div>
                     <h1 className="page-title">Timetable</h1>
@@ -150,13 +139,24 @@ export default function TimetablePage() {
 
             {/* Selection Nav */}
             {timetables.length > 0 && (
-                <div className="card" style={{ marginBottom: '1.5rem', padding: '1rem' }}>
+                <motion.div 
+                    initial={{ y: 10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    className="card" 
+                    style={{ marginBottom: '1.5rem', padding: '1rem' }}
+                >
                     {viewType === 'class' ? (
                         <div className="flex gap-2 flex-wrap">
                             {timetables.map(tt => (
-                                <button key={tt._id} onClick={() => setSelected(tt)} className={`btn ${selected?._id === tt._id ? 'btn-primary' : 'btn-secondary'}`} style={{ gap: '0.5rem', padding: '0.5rem 1rem' }}>
+                                <motion.button 
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    key={tt._id} onClick={() => setSelected(tt)} 
+                                    className={`btn ${selected?._id === tt._id ? 'btn-primary' : 'btn-secondary'}`} 
+                                    style={{ gap: '0.5rem', padding: '0.5rem 1rem' }}
+                                >
                                     <CalendarDays size={14} /> Sem {tt.semester} | {tt.section}
-                                </button>
+                                </motion.button>
                             ))}
                         </div>
                     ) : (
@@ -169,20 +169,31 @@ export default function TimetablePage() {
                             </select>
                         </div>
                     )}
-                </div>
+                </motion.div>
             )}
 
             {isHODOrPrincipal && (
-                <div className="card" style={{ marginBottom: '1.5rem' }}>
+                <motion.div 
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className="card" style={{ marginBottom: '1.5rem' }}
+                >
                     <h3 className="section-title" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Zap size={18} color="var(--accent)" /> Auto-Generate Timetable
                     </h3>
-                    {msg && (
-                        <div className={`alert ${msg.startsWith('error:') ? 'alert-error' : msg.includes('conflicts') ? 'alert-warning' : 'alert-success'}`} style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                            {msg.startsWith('error:') ? <AlertTriangle size={16} /> : msg.includes('conflicts') ? <AlertTriangle size={16} /> : <CheckCircle2 size={16} />}
-                            {msg.replace('error:', '')}
-                        </div>
-                    )}
+                    <AnimatePresence>
+                        {msg && (
+                            <motion.div 
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                className={`alert ${msg.startsWith('error:') ? 'alert-error' : msg.includes('conflicts') ? 'alert-warning' : 'alert-success'}`} style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}
+                            >
+                                {msg.startsWith('error:') ? <AlertTriangle size={16} /> : msg.includes('conflicts') ? <AlertTriangle size={16} /> : <CheckCircle2 size={16} />}
+                                {msg.replace('error:', '')}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                     <div className="form-row">
                         {user?.role === 'principal' && (
                             <div className="form-group">
@@ -207,175 +218,115 @@ export default function TimetablePage() {
                     <button className="btn btn-primary" onClick={generate} disabled={generating} style={{ marginTop: '1rem', gap: '0.5rem' }}>
                         {generating ? <><span className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} /> Generating...</> : <><Zap size={16} /> Generate Class Timetable</>}
                     </button>
-                </div>
+                </motion.div>
             )}
 
-            {/* ──── Priority-Based Timetable (HOD Only) ──── */}
-            {isHODOrPrincipal && (
-                <div className="card" style={{ marginBottom: '1.5rem' }}>
-                    <h3 className="section-title" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <TrendingUp size={18} color="var(--accent)" /> Priority Timetable (Syllabus-Driven)
-                    </h3>
-                    <p className="text-sm text-muted" style={{ marginBottom: '1rem' }}>
-                        Uses faculty coverage data to schedule more hours for under-covered subjects.
-                        Faculty must enter their coverage in <strong>Coverage Report</strong> first.
-                    </p>
-                    {priorityMsg && (
-                        <div className={`alert ${priorityMsg.startsWith('error:') ? 'alert-error' : 'alert-success'}`} style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                            {priorityMsg.startsWith('error:') ? <AlertTriangle size={16} /> : <CheckCircle2 size={16} />}
-                            {priorityMsg.replace('error:', '').replace('success:', '')}
-                        </div>
-                    )}
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label className="form-label">Semester</label>
-                            <select className="form-select" value={priorityForm.semester} onChange={e => setPriorityForm({ ...priorityForm, semester: e.target.value })}>
-                                {[1, 2, 3, 4, 5, 6, 7, 8].map(s => <option key={s} value={s}>Semester {s}</option>)}
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Section</label>
-                            <input className="form-input" value={priorityForm.section} onChange={e => setPriorityForm({ ...priorityForm, section: e.target.value })} placeholder="CS(AI)" />
-                        </div>
-                    </div>
-                    <button className="btn btn-primary" onClick={generatePriority} disabled={generatingPriority} style={{ marginTop: '1rem', gap: '0.5rem' }}>
-                        {generatingPriority ? <><span className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} /> Analyzing & Generating...</> : <><BarChart2 size={16} /> Generate Priority Timetable</>}
-                    </button>
-
-                    {/* Priority Report */}
-                    {priorityReport.length > 0 && (
-                        <div style={{ marginTop: '1.5rem' }}>
-                            <h4 style={{ marginBottom: '0.75rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Schedule Priority Report</h4>
-                            <div style={{ overflowX: 'auto' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
-                                    <thead>
-                                        <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                                            {['Subject', 'Coverage', 'Priority', 'Base Hrs', 'Scheduled Hrs', 'Extra Hrs'].map(h =>
-                                                <th key={h} style={{ padding: '0.5rem 0.75rem', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600 }}>{h}</th>
-                                            )}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {priorityReport.map((row, i) => {
-                                            const colors: Record<string, { bg: string; text: string }> = {
-                                                Critical: { bg: 'rgba(239,68,68,0.12)', text: '#ef4444' },
-                                                High: { bg: 'rgba(249,115,22,0.12)', text: '#f97316' },
-                                                Medium: { bg: 'rgba(234,179,8,0.12)', text: '#eab308' },
-                                                Low: { bg: 'rgba(34,197,94,0.12)', text: '#22c55e' },
-                                            };
-                                            const c = colors[row.priority] || colors.Low;
-                                            return (
-                                                <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
-                                                    <td style={{ padding: '0.6rem 0.75rem', fontWeight: 600 }}>{row.subjectName}</td>
-                                                    <td style={{ padding: '0.6rem 0.75rem' }}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                                            <div style={{ width: 60, height: 6, background: 'var(--bg-secondary)', borderRadius: 99 }}>
-                                                                <div style={{ height: '100%', width: `${row.coverage}%`, background: c.text, borderRadius: 99 }} />
-                                                            </div>
-                                                            <span style={{ color: c.text, fontWeight: 700 }}>{row.coverage}%</span>
-                                                        </div>
-                                                    </td>
-                                                    <td style={{ padding: '0.6rem 0.75rem' }}>
-                                                        <span style={{ display: 'inline-block', padding: '0.15rem 0.6rem', borderRadius: 99, background: c.bg, color: c.text, fontWeight: 700, fontSize: '0.72rem' }}>{row.priority}</span>
-                                                    </td>
-                                                    <td style={{ padding: '0.6rem 0.75rem', color: 'var(--text-muted)' }}>{row.baseHours}h</td>
-                                                    <td style={{ padding: '0.6rem 0.75rem', fontWeight: 700 }}>{row.scheduledHours}h</td>
-                                                    <td style={{ padding: '0.6rem 0.75rem', color: 'var(--accent)' }}>+{row.scheduledHours - row.baseHours}h</td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
+            <AnimatePresence mode="wait">
+                {(viewType === 'class' ? selected : selectedFacultyId) && viewMode === 'calendar' && (
+                    <motion.div 
+                        key="calendar-view"
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.98 }}
+                        className="card"
+                    >
+                        <div className="section-header">
+                            <div>
+                                <h3 className="section-title">
+                                    {viewType === 'class'
+                                        ? `Sem ${selected?.semester} | Section ${selected?.section}`
+                                        : `Faculty: ${faculties.find(f => f._id === selectedFacultyId)?.name || 'Unknown'}`
+                                    }
+                                </h3>
+                                <p className="text-sm text-muted">{currentSlots.length} classes scheduled</p>
                             </div>
+                            {viewType === 'class' && selected?.isApproved && <span className="badge badge-approved" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle2 size={12} /> Approved</span>}
                         </div>
-                    )}
-                </div>
-            )}
-
-            {(viewType === 'class' ? selected : selectedFacultyId) && viewMode === 'calendar' && (
-                <div className="card">
-                    <div className="section-header">
-                        <div>
-                            <h3 className="section-title">
-                                {viewType === 'class'
-                                    ? `Sem ${selected?.semester} | Section ${selected?.section}`
-                                    : `Faculty: ${faculties.find(f => f._id === selectedFacultyId)?.name || 'Unknown'}`
-                                }
-                            </h3>
-                            <p className="text-sm text-muted">{currentSlots.length} classes scheduled</p>
-                        </div>
-                        {viewType === 'class' && selected?.isApproved && <span className="badge badge-approved" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle2 size={12} /> Approved</span>}
-                    </div>
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem', minWidth: '700px' }}>
-                            <thead>
-                                <tr>
-                                    <th style={{ padding: '0.5rem', textAlign: 'left', color: 'var(--text-muted)', fontSize: '0.75rem', width: 70 }}>Time</th>
-                                    {DAYS.map((d, i) => <th key={d} style={{ padding: '0.5rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{DAY_SHORT[i]}</th>)}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {TIMES.map(time => (
-                                    <tr key={time}>
-                                        <td style={{ padding: '0.25rem 0.5rem', fontSize: '0.7rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{time}</td>
-                                        {DAYS.map(day => {
-                                            const slot = getSlot(day, time);
-                                            return (
-                                                <td key={day} style={{ padding: '3px', width: `${100 / 6}%` }}>
-                                                    {slot ? (
-                                                        <div style={{ background: 'var(--accent-light)', borderLeft: '3px solid var(--accent)', borderRadius: '6px', padding: '0.4rem 0.5rem', fontSize: '0.72rem', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                                            <div style={{ fontWeight: 700, color: 'var(--accent)' }}>{slot.subjectId?.subjectCode || '—'}</div>
-                                                            {viewType === 'class' ? (
-                                                                <div style={{ color: 'var(--text-secondary)' }}>{slot.facultyId?.name?.split(' ')[0]}</div>
-                                                            ) : (
-                                                                <div style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Sem {slot.semester} {slot.section}</div>
-                                                            )}
-                                                            <div style={{ color: 'var(--text-muted)' }}>{slot.roomId?.roomNumber}</div>
-                                                        </div>
-                                                    ) : (
-                                                        <div style={{ minHeight: 64, background: 'var(--bg-secondary)', borderRadius: '6px' }} />
-                                                    )}
-                                                </td>
-                                            );
-                                        })}
+                        <div style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem', minWidth: '700px' }}>
+                                <thead>
+                                    <tr>
+                                        <th style={{ padding: '0.5rem', textAlign: 'left', color: 'var(--text-muted)', fontSize: '0.75rem', width: 70 }}>Time</th>
+                                        {DAYS.map((d, i) => <th key={d} style={{ padding: '0.5rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{DAY_SHORT[i]}</th>)}
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
-
-            {(viewType === 'class' ? selected : selectedFacultyId) && viewMode === 'list' && (
-                <div className="card">
-                    <h3 className="section-title" style={{ marginBottom: '1rem' }}>
-                        {viewType === 'class'
-                            ? `Sem ${selected?.semester} | Section ${selected?.section}`
-                            : `Faculty Timetable: ${faculties.find(f => f._id === selectedFacultyId)?.name || 'Unknown'}`
-                        }
-                    </h3>
-                    <div className="card-grid">
-                        {DAYS.map(day => {
-                            const daySlots = currentSlots.filter(s => s.day === day);
-                            return (
-                                <div key={day} style={{ background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', padding: '1rem' }}>
-                                    <h4 style={{ marginBottom: '0.75rem', color: 'var(--accent)', fontSize: '0.875rem', fontWeight: 700 }}>{day}</h4>
-                                    {daySlots.length === 0 ? <p className="text-xs text-muted">No classes</p> : daySlots.sort((a, b) => a.startTime.localeCompare(b.startTime)).map((s, i) => (
-                                        <div key={i} style={{ padding: '0.5rem', background: 'var(--bg-card)', borderRadius: 6, marginBottom: '0.5rem', borderLeft: '3px solid var(--accent)' }}>
-                                            <div className="font-bold text-sm">{s.subjectId?.subjectName}</div>
-                                            <div className="text-xs text-muted">
-                                                {s.startTime}–{s.endTime} ·
-                                                {viewType === 'class' ? s.facultyId?.name : <strong style={{ color: 'var(--text-primary)' }}>Sem {s.semester} {s.section}</strong>}
-                                                {' · '}{s.roomId?.roomNumber}
-                                            </div>
-                                        </div>
+                                </thead>
+                                <tbody>
+                                    {TIMES.map(time => (
+                                        <tr key={time}>
+                                            <td style={{ padding: '0.25rem 0.5rem', fontSize: '0.7rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{time}</td>
+                                            {DAYS.map(day => {
+                                                const slot = getSlot(day, time);
+                                                return (
+                                                    <td key={day} style={{ padding: '3px', width: `${100 / 6}%` }}>
+                                                        {slot ? (
+                                                            <motion.div 
+                                                                whileHover={{ scale: 1.05, zIndex: 10 }}
+                                                                style={{ background: 'var(--accent-light)', borderLeft: '3px solid var(--accent)', borderRadius: '6px', padding: '0.4rem 0.5rem', fontSize: '0.72rem', height: '100%', display: 'flex', flexDirection: 'column', cursor: 'pointer' }}
+                                                            >
+                                                                <div style={{ fontWeight: 700, color: 'var(--accent)' }}>{slot.subjectId?.subjectCode || '—'}</div>
+                                                                {viewType === 'class' ? (
+                                                                    <div style={{ color: 'var(--text-secondary)' }}>{slot.facultyId?.name?.split(' ')[0]}</div>
+                                                                ) : (
+                                                                    <div style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Sem {slot.semester} {slot.section}</div>
+                                                                )}
+                                                                <div style={{ color: 'var(--text-muted)' }}>{slot.roomId?.roomNumber}</div>
+                                                            </motion.div>
+                                                        ) : (
+                                                            <div style={{ minHeight: 64, background: 'var(--bg-secondary)', borderRadius: '6px', opacity: 0.3 }} />
+                                                        )}
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
                                     ))}
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </motion.div>
+                )}
+
+                {(viewType === 'class' ? selected : selectedFacultyId) && viewMode === 'list' && (
+                    <motion.div 
+                        key="list-view"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        className="card"
+                    >
+                        <h3 className="section-title" style={{ marginBottom: '1rem' }}>
+                            {viewType === 'class'
+                                ? `Sem ${selected?.semester} | Section ${selected?.section}`
+                                : `Faculty Timetable: ${faculties.find(f => f._id === selectedFacultyId)?.name || 'Unknown'}`
+                            }
+                        </h3>
+                        <div className="card-grid">
+                            {DAYS.map((day, di) => {
+                                const daySlots = currentSlots.filter(s => s.day === day);
+                                return (
+                                    <motion.div 
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.1 * di }}
+                                        key={day} style={{ background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)', padding: '1rem' }}
+                                    >
+                                        <h4 style={{ marginBottom: '0.75rem', color: 'var(--accent)', fontSize: '0.875rem', fontWeight: 700 }}>{day}</h4>
+                                        {daySlots.length === 0 ? <p className="text-xs text-muted">No classes</p> : daySlots.sort((a, b) => a.startTime.localeCompare(b.startTime)).map((s, i) => (
+                                            <div key={i} style={{ padding: '0.5rem', background: 'var(--bg-card)', borderRadius: 6, marginBottom: '0.5rem', borderLeft: '3px solid var(--accent)' }}>
+                                                <div className="font-bold text-sm">{s.subjectId?.subjectName}</div>
+                                                <div className="text-xs text-muted">
+                                                    {s.startTime}–{s.endTime} ·
+                                                    {viewType === 'class' ? s.facultyId?.name : <strong style={{ color: 'var(--text-primary)' }}>Sem {s.semester} {s.section}</strong>}
+                                                    {' · '}{s.roomId?.roomNumber}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {timetables.length === 0 && (
                 <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
@@ -384,6 +335,6 @@ export default function TimetablePage() {
                     <p className="text-muted" style={{ marginTop: '0.5rem' }}>Use the generator above to create your first timetable.</p>
                 </div>
             )}
-        </div>
+        </motion.div>
     );
 }

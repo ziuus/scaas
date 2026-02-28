@@ -29,10 +29,10 @@ async function findSubstitute(
     if (!candidates.length) return null;
 
     // Leaves on the same day for other faculty
-    const siblingLeaves = await LeaveRequest.find({
+    const siblingLeaves = (await LeaveRequest.find({
         departmentId,
         facultyId: { $ne: excludeFacultyId },
-    }).lean() as { facultyId: string; leaveType: string; startDate: Date; endDate?: Date; startTime?: string; endTime?: string }[];
+    }).lean()) as unknown as { facultyId: unknown; leaveType: string; startDate: Date; endDate?: Date; startTime?: string; endTime?: string }[];
 
     // Timetables for dept
     const timetables = await Timetable.find({ departmentId }).lean() as { slots: { day: string; startTime: string; endTime: string; facultyId: string }[] }[];

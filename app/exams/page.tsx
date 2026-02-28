@@ -29,6 +29,7 @@ export default function ExamsPage() {
         setLoading(false);
     }, []);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => { load(); }, [load]);
 
     const createExam = async () => {

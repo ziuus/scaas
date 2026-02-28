@@ -18,8 +18,8 @@ export async function GET(req: NextRequest) {
             .populate('subjects', 'subjectName subjectCode')
             .sort({ examDate: 1 });
         return NextResponse.json({ exams });
-    } catch (err) {
-        return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    } catch {
+        return NextResponse.json({ error: 'Failed to fetch' }, { status: 500 });
     }
 }
 
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const exam = await Exam.create(body);
         return NextResponse.json({ exam }, { status: 201 });
-    } catch (err) {
+    } catch {
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }

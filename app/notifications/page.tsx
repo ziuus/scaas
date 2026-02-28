@@ -2,8 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth, apiFetch } from '@/lib/auth-context';
 import {
-    Bell, CheckCheck, BellOff, Info, AlertTriangle,
-    CalendarDays, Layout, UserCheck, RefreshCw,
+    CheckCheck, BellOff, AlertTriangle,
+    CalendarDays, Layout, UserCheck, RefreshCw
 } from 'lucide-react';
 
 interface Notification { _id: string; title: string; body: string; type: string; isRead: boolean; createdAt: string; }
@@ -30,6 +30,7 @@ export default function NotificationsPage() {
         setLoading(false);
     }, []);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => { load(); }, [load]);
 
     const markAllRead = async () => {

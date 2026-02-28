@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Faculty from '@/models/Faculty';
 import LeaveRequest from '@/models/LeaveRequest';
-import InvigilatorAllocation from '@/models/InvigilatorAllocation';
 import Timetable from '@/models/Timetable';
 import Room from '@/models/Room';
 import { verifyToken, getTokenFromHeader } from '@/lib/auth';
@@ -16,10 +15,9 @@ export async function GET(req: NextRequest) {
         }
         await dbConnect();
 
-        const [facultyList, leaves, invigilations, timetables, rooms] = await Promise.all([
+        const [facultyList, leaves, timetables, rooms] = await Promise.all([
             Faculty.find().populate('departmentId', 'name'),
             LeaveRequest.find().populate('facultyId', 'name').populate('departmentId', 'name'),
-            InvigilatorAllocation.find().populate('primaryInvigilatorId', 'name departmentId'),
             Timetable.find(),
             Room.find(),
         ]);

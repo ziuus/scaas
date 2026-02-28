@@ -4,7 +4,7 @@ import { useAuth, apiFetch } from '@/lib/auth-context';
 import {
     Users, BookOpen, Clock, FileText,
     CalendarDays, Umbrella, ClipboardList, Eye,
-    Upload, BarChart3, CheckCircle2, XCircle,
+    CheckCircle2, XCircle,
 } from 'lucide-react';
 
 export default function HODDashboard() {
@@ -32,74 +32,87 @@ export default function HODDashboard() {
     const pendingLeaves = (leaves as { status: string }[]).filter(l => l.status === 'pending').length;
 
     const quickActions = [
-        { href: '/timetable', icon: CalendarDays, label: 'Generate Timetable' },
-        { href: '/leave', icon: Umbrella, label: 'Manage Leaves' },
-        { href: '/exams', icon: ClipboardList, label: 'Schedule Exams' },
-        { href: '/invigilator', icon: Eye, label: 'Assign Invigilators' },
-        { href: '/import', icon: Upload, label: 'Bulk Import' },
-        { href: '/analytics', icon: BarChart3, label: 'View Analytics' },
+        { href: '/timetable', icon: CalendarDays, label: 'Timetable', color: '#6366f1' },
+        { href: '/leave', icon: Umbrella, label: 'Leaves', color: '#fbbf24' },
+        { href: '/exams', icon: ClipboardList, label: 'Exams', color: '#34d399' },
+        { href: '/invigilator', icon: Eye, label: 'Invigilators', color: '#60a5fa' },
     ];
 
     return (
-        <div>
+        <div className="animate-fade-in">
             <div className="page-header">
                 <div>
                     <h1 className="page-title">HOD Dashboard</h1>
-                    <p className="page-subtitle">{user?.department?.name} — Department Management</p>
+                    <p className="page-subtitle">{user?.department?.name} &mdash; Department Management</p>
                 </div>
             </div>
 
-            <div className="card-grid" style={{ marginBottom: '2rem' }}>
+            <div className="bento-grid">
+                {/* Stats Summary */}
                 {[
-                    { icon: Users, value: faculty.length, label: 'Faculty Members', color: 'var(--accent)' },
-                    { icon: BookOpen, value: subjects.length, label: 'Subjects', color: 'var(--info)' },
-                    { icon: Clock, value: pendingLeaves, label: 'Pending Leaves', color: 'var(--warning)' },
-                    { icon: FileText, value: leaves.length, label: 'Total Requests', color: 'var(--success)' },
+                    { icon: Users, value: faculty.length, label: 'Faculty Members', color: '#6366f1' },
+                    { icon: BookOpen, value: subjects.length, label: 'Subjects', color: '#60a5fa' },
+                    { icon: Clock, value: pendingLeaves, label: 'Pending Leaves', color: '#fbbf24' },
+                    { icon: FileText, value: leaves.length, label: 'Total Requests', color: '#34d399' },
                 ].map(({ icon: Icon, value, label, color }) => (
-                    <div key={label} className="stat-card">
-                        <div className="stat-icon"><Icon size={28} color={color} strokeWidth={1.5} /></div>
-                        <div className="stat-value" style={{ color }}>{value}</div>
-                        <div className="stat-label">{label}</div>
+                    <div key={label} className="bento-card bento-col-3 animate-fade-up">
+                        <div style={{ background: `${color}15`, padding: '0.65rem', borderRadius: '10px', width: 'fit-content', marginBottom: '0.75rem' }}>
+                            <Icon size={20} color={color} strokeWidth={2} />
+                        </div>
+                        <div className="stat-value" style={{ color: 'var(--text-primary)', fontSize: '1.5rem', marginBottom: '0.15rem' }}>{value}</div>
+                        <div className="stat-label" style={{ fontSize: '0.72rem' }}>{label}</div>
                     </div>
                 ))}
-            </div>
 
-            <div className="card" style={{ marginBottom: '1.5rem' }}>
-                <h3 className="section-title" style={{ marginBottom: '1rem' }}>Quick Actions</h3>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-                    {quickActions.map(({ href, icon: Icon, label }) => (
-                        <a key={href} href={href} className="btn btn-secondary" style={{ gap: '0.5rem' }}>
-                            <Icon size={16} /> {label}
-                        </a>
-                    ))}
+                {/* Quick Actions Card */}
+                <div className="bento-card bento-col-4 animate-fade-up" style={{ animationDelay: '0.1s' }}>
+                    <div className="section-header"><h3 className="section-title">Quick Actions</h3></div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                        {quickActions.map(({ href, icon: Icon, label, color }) => (
+                            <a key={href} href={href} className="btn btn-secondary" style={{ 
+                                padding: '1rem', 
+                                flexDirection: 'column', 
+                                gap: '0.5rem', 
+                                height: 'auto',
+                                background: 'var(--bg-glass)',
+                                border: '1px solid var(--border-glass)'
+                            }}>
+                                <Icon size={20} color={color} />
+                                <span className="text-xs font-bold">{label}</span>
+                            </a>
+                        ))}
+                    </div>
                 </div>
-            </div>
 
-            <div className="card">
-                <div className="section-header"><h3 className="section-title">Recent Leave Requests</h3></div>
-                <div className="table-wrapper">
-                    <table className="table">
-                        <thead><tr><th>Faculty</th><th>Period</th><th>Reason</th><th>Status</th></tr></thead>
-                        <tbody>
-                            {(leaves as { facultyId?: { name?: string }; startDate?: string; endDate?: string; reason?: string; status?: string }[]).slice(0, 5).map((l, i) => (
-                                <tr key={i}>
-                                    <td className="font-bold">{l.facultyId?.name || 'N/A'}</td>
-                                    <td className="text-sm text-muted">
-                                        {l.startDate ? new Date(l.startDate).toLocaleDateString() : ''} –{' '}
-                                        {l.endDate ? new Date(l.endDate).toLocaleDateString() : ''}
-                                    </td>
-                                    <td className="text-sm">{l.reason}</td>
-                                    <td>
-                                        <span className={`badge badge-${l.status}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                            {l.status === 'approved' ? <CheckCircle2 size={12} /> : l.status === 'rejected' ? <XCircle size={12} /> : <Clock size={12} />}
-                                            {l.status}
-                                        </span>
-                                    </td>
-                                </tr>
-                            ))}
-                            {leaves.length === 0 && <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No leave requests yet</td></tr>}
-                        </tbody>
-                    </table>
+                {/* Recent Leaves Table */}
+                <div className="bento-card bento-col-8 animate-fade-up" style={{ animationDelay: '0.2s' }}>
+                    <div className="section-header">
+                        <h3 className="section-title">Recent Leave Requests</h3>
+                        <a href="/leave" className="text-xs font-bold" style={{ color: 'var(--accent)' }}>View All</a>
+                    </div>
+                    <div className="table-wrapper">
+                        <table className="table">
+                            <thead><tr><th>Faculty</th><th>Period</th><th>Status</th></tr></thead>
+                            <tbody>
+                                {(leaves as { facultyId?: { name?: string }; startDate?: string; endDate?: string; reason?: string; status?: string }[]).slice(0, 5).map((l, i) => (
+                                    <tr key={i}>
+                                        <td className="font-bold">{l.facultyId?.name || 'N/A'}</td>
+                                        <td className="text-sm text-muted">
+                                            {l.startDate ? new Date(l.startDate).toLocaleDateString() : ''} &ndash;{' '}
+                                            {l.endDate ? new Date(l.endDate).toLocaleDateString() : ''}
+                                        </td>
+                                        <td>
+                                            <span className={`badge badge-${l.status}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '0.2rem 0.6rem' }}>
+                                                {l.status === 'approved' ? <CheckCircle2 size={10} /> : l.status === 'rejected' ? <XCircle size={10} /> : <Clock size={10} />}
+                                                {l.status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {leaves.length === 0 && <tr><td colSpan={3} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No leave requests yet</td></tr>}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

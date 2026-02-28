@@ -34,6 +34,9 @@ export async function POST(req: NextRequest) {
         if (subjects.length === 0) return NextResponse.json({ error: 'No subjects found for this semester' }, { status: 400 });
         if (facultyList.length === 0) return NextResponse.json({ error: 'No faculty found' }, { status: 400 });
         if (rooms.length === 0) return NextResponse.json({ error: 'No rooms found' }, { status: 400 });
+        
+        // Fetch syllabus coverage records for this semester
+        const coverageRecords = await SyllabusCoverage.find({ departmentId, semester: parseInt(String(semester)) });
 
         // Build a coverage map: subjectId → { coveragePercent, remainingHours, predictedHours }
         const coverageMap: Record<string, { pct: number; remainingHours: number; predicted: number }> = {};

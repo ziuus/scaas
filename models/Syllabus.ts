@@ -39,9 +39,8 @@ const SyllabusSchema = new Schema<ISyllabus>({
 }, { timestamps: true });
 
 // Auto-compute totalEstimatedHours before save
-SyllabusSchema.pre('save', function (this: ISyllabus & Document, next) {
+SyllabusSchema.pre('save', async function (this: ISyllabus) {
     this.totalEstimatedHours = this.topics.reduce((sum, t) => sum + (t.estimatedHours || 1), 0);
-    next();
 });
 
 // Unique syllabus per subject+semester+section

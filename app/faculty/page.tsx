@@ -30,6 +30,7 @@ export default function FacultyPage() {
         setLoading(false);
     }, []);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => { load(); }, [load]);
 
     const openAdd = () => {

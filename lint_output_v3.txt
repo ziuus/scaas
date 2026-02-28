@@ -1,0 +1,68 @@
+
+> hack@0.1.0 lint
+> eslint
+
+
+/home2/home/dovndev/Projects/scaas/app/analytics/page.tsx
+  4:107  warning  'Legend' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home2/home/dovndev/Projects/scaas/app/api/analytics/route.ts
+  19:37  warning  'invigilations' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home2/home/dovndev/Projects/scaas/app/api/coverage/route.ts
+  97:15  warning  'subject' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home2/home/dovndev/Projects/scaas/app/api/departments/route.ts
+  14:14  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+  28:14  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home2/home/dovndev/Projects/scaas/app/api/exams/route.ts
+  21:14  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+  37:14  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home2/home/dovndev/Projects/scaas/app/api/invigilator/route.ts
+  29:14  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home2/home/dovndev/Projects/scaas/app/api/notifications/route.ts
+  14:14  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+  31:14  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home2/home/dovndev/Projects/scaas/app/coverage/page.tsx
+  7:5  warning  'Clock' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home2/home/dovndev/Projects/scaas/app/dashboard/principal/page.tsx
+  6:24  warning  'BarChart3' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home2/home/dovndev/Projects/scaas/app/layout.tsx
+  24:9  warning  Custom fonts not added in `pages/_document.js` will only load for a single page. This is discouraged. See: https://nextjs.org/docs/messages/no-page-custom-font  @next/next/no-page-custom-font
+
+/home2/home/dovndev/Projects/scaas/app/login/page.tsx
+  2:20  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+  5:8   warning  'styles' is defined but never used     @typescript-eslint/no-unused-vars
+
+/home2/home/dovndev/Projects/scaas/app/notifications/page.tsx
+  5:5   warning  'Bell' is defined but never used  @typescript-eslint/no-unused-vars
+  5:32  warning  'Info' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home2/home/dovndev/Projects/scaas/components/BottomNav.tsx
+  5:66  warning  'Eye' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home2/home/dovndev/Projects/scaas/components/Sidebar.tsx
+  45:35  warning  'isOpen' is defined but never used  @typescript-eslint/no-unused-vars
+  45:43  warning  'toggle' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home2/home/dovndev/Projects/scaas/lib/auth-context.tsx
+   2:54  warning  'useEffect' is defined but never used              @typescript-eslint/no-unused-vars
+  43:23  warning  'setIsLoading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home2/home/dovndev/Projects/scaas/lib/db.ts
+  10:5  warning  Unused eslint-disable directive (no problems were reported from 'no-var')
+  12:5  warning  Unused eslint-disable directive (no problems were reported from 'no-var')
+  14:5  warning  Unused eslint-disable directive (no problems were reported from 'no-var')
+
+/home2/home/dovndev/Projects/scaas/lib/seating-engine.ts
+  40:5  warning  'preferDeptSeparation' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 26 problems (0 errors, 26 warnings)
+  0 errors and 3 warnings potentially fixable with the `--fix` option.
+

@@ -2,13 +2,12 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { LayoutDashboard, CalendarDays, Umbrella, ClipboardList, Eye, Bell, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, ClipboardList, BarChart3, Bell, Umbrella } from 'lucide-react';
 
 const navItems = {
     principal: [
         { href: '/dashboard/principal', icon: LayoutDashboard, label: 'Home' },
         { href: '/analytics', icon: BarChart3, label: 'Analytics' },
-        { href: '/timetable', icon: CalendarDays, label: 'Timetable' },
         { href: '/notifications', icon: Bell, label: 'Alerts' },
     ],
     hod: [

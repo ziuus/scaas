@@ -98,7 +98,7 @@ export async function GET() {
         }
 
         return NextResponse.json({ success: true, results });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (err) {
+        return NextResponse.json({ error: (err as Error).message }, { status: 500 });
     }
 }

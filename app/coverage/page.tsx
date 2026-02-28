@@ -4,7 +4,7 @@ import { useAuth, apiFetch } from '@/lib/auth-context';
 import {
     BookOpen, CheckCircle2, AlertTriangle, BarChart3,
     ChevronDown, ChevronRight, Pencil, X, Layers, Upload,
-    Clock, Trash2, GraduationCap, TrendingDown, Zap, Info, FileText, Eye,
+    Trash2, GraduationCap, TrendingDown, Zap, Info, FileText, Eye,
 } from 'lucide-react';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -97,6 +97,7 @@ export default function CoveragePage() {
         setLoading(false);
     }, [loadRecords, loadSyllabi]);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => { load(); }, [load]);
 
     // ── HOD: Upload syllabus file ─────────────────────────────────────────────
@@ -319,7 +320,7 @@ export default function CoveragePage() {
                         <div className="alert alert-info" style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', padding: '0.75rem 1rem' }}>
                             <Info size={14} style={{ flexShrink: 0, marginTop: 1 }} />
                             <div style={{ fontSize: '0.8rem' }}>
-                                The parser auto-detects numbered lists, bullet points, unit/module headers. If total hours are provided, they are distributed evenly across topics that don't have hours specified.
+                                The parser auto-detects numbered lists, bullet points, unit/module headers. If total hours are provided, they are distributed evenly across topics that don&apos;t have hours specified.
                             </div>
                         </div>
 

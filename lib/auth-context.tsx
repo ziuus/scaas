@@ -1,5 +1,5 @@
-'use client';
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+"use client";
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface User {
     id: string;
@@ -23,19 +23,24 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [token, setToken] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const savedToken = localStorage.getItem('token');
-        const savedUser = localStorage.getItem('user');
-        if (savedToken && savedUser) {
-            setToken(savedToken);
-            setUser(JSON.parse(savedUser));
+    const [user, setUser] = useState<User | null>(() => {
+        if (typeof window !== 'undefined') {
+            const savedUser = localStorage.getItem('user');
+            try {
+                return savedUser ? JSON.parse(savedUser) : null;
+            } catch {
+                return null;
+            }
         }
-        setIsLoading(false);
-    }, []);
+        return null;
+    });
+    const [token, setToken] = useState<string | null>(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('token');
+        }
+        return null;
+    });
+    const [isLoading] = useState(false);
 
     const login = async (email: string, password: string) => {
         const res = await fetch('/api/auth/login', {

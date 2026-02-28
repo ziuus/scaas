@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
             .populate('primaryInvigilatorId', 'name email')
             .populate('backupInvigilatorId', 'name email');
         return NextResponse.json({ allocations });
-    } catch (err) {
+    } catch {
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
@@ -107,8 +107,8 @@ export async function POST(req: NextRequest) {
         }
 
         return NextResponse.json({ allocations: saved, unassigned });
-    } catch (err) {
-        console.error(err);
+    } catch (_err) {
+        console.error(_err);
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }

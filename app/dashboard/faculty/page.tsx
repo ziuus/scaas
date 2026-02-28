@@ -25,64 +25,79 @@ export default function FacultyDashboard() {
     const unread = (notifications as { isRead: boolean }[]).filter(n => !n.isRead).length;
 
     const quickActions = [
-        { href: '/timetable', icon: CalendarDays, label: 'View My Timetable (Offline Ready)' },
-        { href: '/leave', icon: Umbrella, label: 'Apply for Leave' },
-        { href: '/invigilator', icon: Eye, label: 'My Invigilation Duties' },
-        { href: '/notifications', icon: Bell, label: `Notifications${unread > 0 ? ` (${unread} new)` : ''}` },
+        { href: '/timetable', icon: CalendarDays, label: 'Timetable', color: '#6366f1' },
+        { href: '/leave', icon: Umbrella, label: 'Leave', color: '#fbbf24' },
+        { href: '/invigilator', icon: Eye, label: 'Duties', color: '#34d399' },
+        { href: '/notifications', icon: Bell, label: 'Alerts', color: '#60a5fa' },
     ];
 
     return (
-        <div>
+        <div className="animate-fade-in">
             <div className="page-header">
                 <div>
                     <h1 className="page-title">My Dashboard</h1>
-                    <p className="page-subtitle">Welcome, {user?.name} — {user?.department?.name}</p>
+                    <p className="page-subtitle">Welcome, {user?.name} &mdash; {user?.department?.name}</p>
                 </div>
             </div>
 
-            <div className="card-grid" style={{ marginBottom: '2rem' }}>
+            <div className="bento-grid">
+                {/* Stats Summary */}
                 {[
-                    { Icon: Umbrella, value: leaves.length, label: 'Leaves Taken', color: 'var(--accent)' },
-                    { Icon: Bell, value: unread, label: 'Unread Alerts', color: 'var(--info)' },
-                ].map(({ Icon, value, label, color }) => (
-                    <div key={label} className="stat-card">
-                        <div className="stat-icon"><Icon size={28} color={color} strokeWidth={1.5} /></div>
-                        <div className="stat-value" style={{ color }}>{value}</div>
-                        <div className="stat-label">{label}</div>
+                    { icon: Umbrella, value: leaves.length, label: 'Leaves Taken', color: '#6366f1' },
+                    { icon: Bell, value: unread, label: 'Unread Alerts', color: '#60a5fa' },
+                ].map(({ icon: Icon, value, label, color }) => (
+                    <div key={label} className="bento-card bento-col-4 animate-fade-up">
+                        <div style={{ background: `${color}15`, padding: '0.65rem', borderRadius: '10px', width: 'fit-content', marginBottom: '0.75rem' }}>
+                            <Icon size={20} color={color} strokeWidth={2} />
+                        </div>
+                        <div className="stat-value" style={{ color: 'var(--text-primary)', fontSize: '1.5rem', marginBottom: '0.15rem' }}>{value}</div>
+                        <div className="stat-label" style={{ fontSize: '0.72rem' }}>{label}</div>
                     </div>
                 ))}
-            </div>
 
-            <div className="card-grid">
-                <div className="card">
-                    <h3 className="section-title" style={{ marginBottom: '1rem' }}>Quick Actions</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        {quickActions.map(({ href, icon: Icon, label }) => (
-                            <a key={href} href={href} className="btn btn-secondary" style={{ gap: '0.5rem' }}>
-                                <Icon size={16} /> {label}
+                {/* Quick Actions */}
+                <div className="bento-card bento-col-4 animate-fade-up" style={{ animationDelay: '0.1s' }}>
+                    <div className="section-header"><h3 className="section-title">Quick Actions</h3></div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                        {quickActions.map(({ href, icon: Icon, label, color }) => (
+                            <a key={href} href={href} className="btn btn-secondary" style={{ 
+                                padding: '1rem', 
+                                flexDirection: 'column', 
+                                gap: '0.5rem', 
+                                height: 'auto',
+                                background: 'var(--bg-glass)',
+                                border: '1px solid var(--border-glass)'
+                            }}>
+                                <Icon size={20} color={color} />
+                                <span className="text-xs font-bold">{label}</span>
                             </a>
                         ))}
                     </div>
                 </div>
 
-                <div className="card">
-                    <h3 className="section-title" style={{ marginBottom: '1rem' }}>Recent Alerts</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        {(notifications as { _id: string; title: string; body: string; isRead: boolean }[]).slice(0, 5).map(n => (
-                            <div key={n._id} style={{
-                                padding: '0.75rem', borderRadius: 'var(--radius-sm)',
-                                background: n.isRead ? 'var(--bg-secondary)' : 'var(--accent-light)',
-                                border: `1px solid ${n.isRead ? 'var(--border)' : 'var(--border-accent)'}`,
-                                display: 'flex', gap: '0.75rem', alignItems: 'flex-start',
+                {/* Recent Alerts */}
+                <div className="bento-card bento-col-8 animate-fade-up" style={{ animationDelay: '0.2s' }}>
+                    <div className="section-header">
+                        <h3 className="section-title">Recent Alerts</h3>
+                        <a href="/notifications" className="text-xs font-bold" style={{ color: 'var(--accent)' }}>View All</a>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                        {(notifications as { _id: string; title: string; body: string; isRead: boolean }[]).slice(0, 4).map(n => (
+                            <div key={n._id} className="list-item" style={{
+                                padding: '0.75rem 1rem',
+                                background: n.isRead ? 'transparent' : 'rgba(99, 102, 241, 0.04)',
+                                border: `1px solid ${n.isRead ? 'var(--border)' : 'rgba(129, 140, 248, 0.15)'}`,
                             }}>
-                                <AlertCircle size={16} color="var(--accent)" style={{ marginTop: 2, flexShrink: 0 }} />
-                                <div>
-                                    <div className="font-bold text-sm">{n.title}</div>
-                                    <div className="text-xs text-muted" style={{ marginTop: '2px' }}>{n.body}</div>
+                                <div style={{ background: n.isRead ? 'var(--bg-secondary)' : 'var(--accent-light)', padding: '0.5rem', borderRadius: '8px' }}>
+                                    <AlertCircle size={14} color={n.isRead ? 'var(--text-muted)' : 'var(--accent)'} />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <div className="font-bold text-sm" style={{ color: n.isRead ? 'var(--text-secondary)' : 'var(--text-primary)' }}>{n.title}</div>
+                                    <div className="text-xs text-muted" style={{ marginTop: '3px' }}>{n.body}</div>
                                 </div>
                             </div>
                         ))}
-                        {notifications.length === 0 && <p className="text-muted text-sm">No notifications yet.</p>}
+                        {notifications.length === 0 && <p className="text-muted text-sm" style={{ textAlign: 'center', padding: '1.5rem' }}>No notifications yet.</p>}
                     </div>
                 </div>
             </div>
